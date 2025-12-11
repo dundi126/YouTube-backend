@@ -15,7 +15,8 @@ const uploadToCloudinary = async (filePath) => {
     });
 
     //Succesfully uploaded
-    console.log("Cloudinary upload result: ", result);
+    // console.log("Cloudinary upload result: ", result);
+    fs.unlinkSync(filePath); // Remove file from server after upload
 
     return result;
   } catch (error) {

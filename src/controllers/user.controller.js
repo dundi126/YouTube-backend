@@ -15,8 +15,8 @@ const registerUser = asyncHandler(async (req, res) => {
   // check for user creation
   // retrun response
 
-  console.log("Request body:", req.body);
-  const [fullname, email, password, username] = req.body;
+  console.log("User Details: ", req.body);
+  const { fullname, email, password, username } = req.body;
 
   if (
     [fullname, email, password, username].some((field) => field?.trim() === "")
@@ -50,11 +50,11 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const user = await User.create({
     fullname,
-    email,
     avatar: avatar.url,
     coverImage: coverImage?.url || "",
-    username: username.toLowerCase(),
+    email,
     password,
+    username: username.toLowerCase(),
   });
 
   const createdUser = await User.findById(user._id).select(
@@ -67,7 +67,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   return res
     .status(201)
-    .json(new ApiResponse(201, createdUser, "User registered successfully"));
+    .json(new ApiResponse(201, "User registered successfully", createdUser));
 });
 
 export { registerUser };

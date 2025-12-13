@@ -4,6 +4,21 @@ import { User } from "../models/user.model.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
+const generateToken = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    const accessToken = await user.generateAccessToken();
+    const refreshToken = await user.generateRefereshToken();
+
+    user.refereshTokens = refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new Error(500, "Token generation failed");
+  }
+};
+
 const registerUser = asyncHandler(async (req, res) => {
   // Get user details
   // Validate user details
@@ -70,4 +85,65 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, "User registered successfully", createdUser));
 });
 
-export { registerUser };
+const loginUser = asyncHandler(async (req, res) => {
+  //Get user credentials from req body
+  //Validate user credentials
+  //Check if user exists in db
+  //Compare password
+  //If all ok, generate JWT token
+  //send cookies
+
+  const { email, username, password } = req.body;
+
+  if (!(email?.trim() || username?.trim()) || !password?.trim()) {
+    throw new ApiError(400, "Email/Username and password are required");
+  }
+
+  const user = await User.findOne({
+    $or: [{ email }, { username }],
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // const isPasswordCorrect = await user.isPasswordCorrect(password)
+  // if (!isPasswordCorrect) {
+  //     throw new ApiError(401, "Invalid credentials")
+  // }
+
+  await user.isPasswordCorrect(password).catch(() => {
+    throw new ApiError(401, "Invalid credentials");
+  });
+
+  const { accessToken, refreshToken } = await generateToken(user._id);
+
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refereshTokens"
+  );
+
+  const cookieSettings = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, cookieSettings)
+    .cookie("refreshToken", refreshToken, cookieSettings)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          user: loggedInUser,
+          accessToken,
+          refreshToken,
+        },
+        "User logged in successfully"
+      )
+    );
+});
+
+
+
+export { registerUser, loginUser };

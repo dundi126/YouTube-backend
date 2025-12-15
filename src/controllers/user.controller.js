@@ -3,6 +3,7 @@ import { ApiError } from "../utils/apiError.js";
 import { User } from "../models/user.model.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import cookieParser from "cookie-parser";
 
 const generateToken = async (userId) => {
   try {
@@ -144,6 +145,29 @@ const loginUser = asyncHandler(async (req, res) => {
     );
 });
 
+const logoutUser = asyncHandler(async (req, res) => {
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        refereshTokens: undefined,
+      },
+    },
+    {
+      new: true,
+    }
+  );
 
+  const cookieSettings = {
+    httpOnly: true,
+    secure: true,
+  };
 
-export { registerUser, loginUser };
+  return res
+    .status(200)
+    .clearCookie("accessToken", cookieSettings)
+    .clearCookie("refreshToken", cookieSettings)
+    .json(new ApiResponse(200, {}, "User loggedOut successfully!!!"));
+});
+
+export { registerUser, loginUser, logoutUser };

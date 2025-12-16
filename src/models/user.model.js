@@ -44,7 +44,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: ["true", "Password is required!!!"],
     },
-    refereshTokens: {
+    refreshTokens: {
       type: String,
     },
   },
@@ -52,8 +52,7 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre("save", async function () {
-  if (!this.isModified("password")) return next();
-
+  if (!this.isModified("password")) return;
   this.password = await bcrypt.hash(this.password, 10);
 });
 
@@ -62,7 +61,8 @@ userSchema.methods.isPasswordCorrect = async function (password) {
 };
 
 userSchema.methods.generateAccessToken = function () {
-  jwt.sign(
+  console.log("Access token called");
+  return jwt.sign(
     {
       _id: this._id,
       username: this.username,
@@ -75,12 +75,10 @@ userSchema.methods.generateAccessToken = function () {
 };
 
 userSchema.methods.generateRefereshToken = function () {
-  jwt.sign(
+  console.log("refresh token call");
+  return jwt.sign(
     {
       _id: this._id,
-      username: this.username,
-      email: this.email,
-      fullname: this.fullname,
     },
     process.env.REFRESH_TOKEN_SECRET,
     { expiresIn: process.env.REFRESH_TOKEN_EXPIRES }

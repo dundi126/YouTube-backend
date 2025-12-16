@@ -8,11 +8,20 @@ import cookieParser from "cookie-parser";
 const generateToken = async (userId) => {
   try {
     const user = await User.findById(userId);
+    console.log(user);
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
     const accessToken = await user.generateAccessToken();
     const refreshToken = await user.generateRefereshToken();
+    console.log("Access and refresh token generated");
 
-    user.refereshTokens = refreshToken;
+    user.refreshTokens = refreshToken;
+    console.log(user);
     await user.save({ validateBeforeSave: false });
+
+    console.log("Refresh token updated to db");
 
     return { accessToken, refreshToken };
   } catch (error) {
@@ -93,6 +102,8 @@ const loginUser = asyncHandler(async (req, res) => {
   //Compare password
   //If all ok, generate JWT token
   //send cookies
+
+  console.log(req.body);
 
   const { email, username, password } = req.body;
 

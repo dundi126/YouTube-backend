@@ -229,4 +229,106 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+const changePassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+
+  const user = await User.findById(req.user?._id);
+
+  if (!user.isPasswordCorrect(oldPassword)) {
+    throw new ApiError(400, "Invalid Password");
+  }
+
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: false });
+
+  return res.status(200).json(new ApiResponse(200, {}, "Password Updated"));
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  return res
+    .status(200)
+    .json(new ApiResponse(200, req.user, "Current User Details"));
+});
+
+const updateAccount = asyncHandler(async (req, res) => {
+  const { fullname, email } = req.body;
+
+  if (!fullname || !email) {
+    throw new ApiError(401, "User details required to update");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.body?._id,
+    {
+      $set: {
+        fullname: fullname,
+        email: email,
+      },
+    },
+    {
+      new: true,
+    }
+  ).select("-password");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Upadated user details"));
+});
+
+const updateAvatar = asyncHandler(async (req, res) => {
+  const avatarLocalPath = req.file?.path;
+
+  if (!avatarLocalPath) {
+    throw new ApiError(401, "Invalid file Path");
+  }
+
+  const avatar = await uploadToCloudinary(avatarLocalPath);
+
+  if (!avatar.url) {
+    throw new ApiError("500", "Failed to upload new avatar file");
+  }
+
+  const user = await User.findByIdAndUpdate(req.body?._id, {
+    $set: {
+      avatar: avatar.url,
+    },
+  });
+
+  return res.status(200).json(new ApiResponse(200, user, "Avatar updated"));
+});
+
+const updateCoverImage = asyncHandler(async (req, res) => {
+  const coverImageLocalPath = req.file?.path;
+
+  if (!coverImageLocalPath) {
+    throw new ApiError(401, "Invalid file path");
+  }
+
+  const coverImage = await uploadToCloudinary(coverImageLocalPath);
+
+  if (!coverImage.url) {
+    throw new ApiError(500, "Failed to upload new file");
+  }
+
+  const user = await User.findByIdAndUpdate(req.body?._id, {
+    set: {
+      coverImage: coverImage.url,
+    },
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Updated cover image"));
+});
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changePassword,
+  getCurrentUser,
+  updateAccount,
+  updateAvatar,
+  updateCoverImage,
+};

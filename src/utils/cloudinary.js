@@ -26,6 +26,16 @@ const uploadToCloudinary = async (filePath) => {
   }
 };
 
+const deleteFromCloudinary = async (file) => {
+  try {
+    if (!file) return null;
+    const result = await cloudinary.uploader.destroy(file);
+    return result;
+  } catch (error) {
+    console.log("Failed to delete old file", error);
+  }
+};
+
 // (async function () {
 //   // Configuration
 
@@ -63,4 +73,4 @@ const uploadToCloudinary = async (filePath) => {
 //   console.log(autoCropUrl);
 // })();
 
-export { uploadToCloudinary };
+export { uploadToCloudinary, deleteFromCloudinary };

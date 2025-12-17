@@ -1,7 +1,10 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { User } from "../models/user.model.js";
-import { uploadToCloudinary } from "../utils/cloudinary.js";
+import {
+  deleteFromCloudinary,
+  uploadToCloudinary,
+} from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
@@ -277,6 +280,7 @@ const updateAccount = asyncHandler(async (req, res) => {
 
 const updateAvatar = asyncHandler(async (req, res) => {
   const avatarLocalPath = req.file?.path;
+  const oldAvatar = req.body?.avatar;
 
   if (!avatarLocalPath) {
     throw new ApiError(401, "Invalid file Path");
@@ -294,11 +298,15 @@ const updateAvatar = asyncHandler(async (req, res) => {
     },
   });
 
+  const deleteOldFile = deleteFromCloudinary(oldAvatar);
+  console.log(deleteOldFile);
+
   return res.status(200).json(new ApiResponse(200, user, "Avatar updated"));
 });
 
 const updateCoverImage = asyncHandler(async (req, res) => {
   const coverImageLocalPath = req.file?.path;
+  const oldCoverImage = req.body?.coverImage;
 
   if (!coverImageLocalPath) {
     throw new ApiError(401, "Invalid file path");
@@ -315,6 +323,9 @@ const updateCoverImage = asyncHandler(async (req, res) => {
       coverImage: coverImage.url,
     },
   });
+
+  const deleteOldFile = deleteFromCloudinary(oldCoverImage);
+  console.log(deleteOldFile);
 
   return res
     .status(200)
